@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import HomeScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,106 +35,19 @@ import com.example.myapplication.domain.toggleDone
 import com.example.myapplication.domain.addTask
 import com.example.myapplication.domain.filterByDone
 import com.example.myapplication.domain.sortByDueDate
+import com.example.myapplication.viewmodel.TaskViewModel
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) {
-                    HomeScreen()
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    HomeScreen(modifier = Modifier.padding(innerPadding), TaskViewModel())
                 }
             }
         }
-    }
-}
-
-@Composable
-fun HomeScreen() {
-    var taskList: List<Task> by remember { mutableStateOf(mockTasks) }
-    var text by remember { mutableStateOf("") }
-    var text2 by remember { mutableStateOf("") }
-    var check1: Boolean by remember {mutableStateOf(false)}
-    var check2: Boolean by remember {mutableStateOf(false)}
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-            .padding(5.dp)
-    ) {
-        Row(modifier = Modifier.padding(vertical = 5.dp)) {
-            Text("Filter by done:")
-            Checkbox(modifier = Modifier.offset(y = -10.dp),checked = check1, onCheckedChange = {
-                check1 = !check1
-            })
-        }
-        Row(modifier = Modifier.padding(vertical = 5.dp)) {
-            Text("Sort by date:")
-            Checkbox(modifier = Modifier.offset(y = -10.dp),checked = check2, onCheckedChange = {
-                check2 = !check2
-            })
-        }
-
-        var displayedTasks = taskList
-        if (check1) displayedTasks = filterByDone(displayedTasks, true)
-        if (check2) displayedTasks = sortByDueDate(displayedTasks)
-
-        Column(){
-            displayedTasks.forEach { task ->
-                Row() {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(task.title + ": " + task.description)
-                        Text("Due: ${task.dueDate}")
-                    }
-                    Checkbox(
-                        checked = task.done,
-                        onCheckedChange = { taskList = toggleDone(taskList, task.id) }
-                    )
-                }
-            }
-        }
-
-        Text(
-            modifier = Modifier.padding(vertical = 10.dp),
-            text = "Add new task:"
-        )
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            label = { Text("Title") },
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = text2,
-            onValueChange = { text2 = it },
-            label = { Text("Description") },
-            singleLine = true,
-        )
-
-        Button(onClick = {
-            val newTask = Task(
-                id = taskList.size,
-                title = text,
-                description = text2,
-                priority = 1,
-                dueDate = LocalDate.now(),
-                done = false
-            )
-            taskList = addTask(taskList, newTask)
-        }) {
-            Text("Add Task")
-        }
-    }
-
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyApplicationTheme {
-        HomeScreen()
     }
 }
