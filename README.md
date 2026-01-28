@@ -24,3 +24,16 @@ Compose-tilanhallinnalla sovellus voi helposti päivittää vain ne osat käytt�
 ### Kerro, miksi ViewModel on parempi kuin pelkkä remember
 ViewModelin sisällä oleva data säilyy paremmin muistissa verrattuna rememberiin. Esimerkiksi puhelimen kääntyessä vaakatasoon remember-tila nollaantuisi, mutta ViewModelin avulla data pysyy tallessa.
 ViewModelin avulla voidaan erottaa UI:n ja logiikka toisistaan, välttäen spagettikoodia.
+
+# Viikko3
+### MVVM ja miksi se on hyödyllinen Compose-sovelluksissa
+
+MVVM on tapa jakaa sovellus selkeisiin osiin: data (Model), käyttöliittymä (View) ja logiikka/tila (ViewModel).
+
+Compose-sovelluksissa MVVM toimii hyvin, koska UI reagoi suoraan tilan muutoksiin. ViewModel hoitaa sovelluksen tilan ja logiikan, ja Compose vain näyttää sen.
+
+### Miten StateFlow toimii
+
+StateFlow on tapa hallita ja kuunnella tilaa. Sillä on aina joku arvo, ja kun arvo muuttuu, UI päivittyy automaattisesti.
+
+ViewModelissa tilaa pidetään yleensä MutableStateFlow:ssa ja UI saa siitä vain luettavan StateFlow-version. Compose käyttää collectAsState()-funktiota, jonka avulla muutokset näkyvät heti käyttöliittymässä.
