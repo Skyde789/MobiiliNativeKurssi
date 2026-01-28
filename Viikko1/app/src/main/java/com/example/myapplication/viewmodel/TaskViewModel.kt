@@ -1,53 +1,107 @@
 package com.example.myapplication.viewmodel
+import TaskFilter
+import TaskSorting
+import TaskUIState
 import androidx.lifecycle.ViewModel
-import com.example.myapplication.domain.Task
-import com.example.myapplication.domain.mockTasks
+import com.example.myapplication.model.Task
+import com.example.myapplication.model.mockTasks
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalDate
 
 class TaskViewModel : ViewModel()
 {
-    private val _allTasks = MutableStateFlow<List<Task>>(emptyList())
-    private val _visibleTasks = MutableStateFlow<List<Task>>(emptyList())
-    val taskList: StateFlow<List<Task>> = _visibleTasks.asStateFlow()
+    private val _uiState = MutableStateFlow(TaskUIState())
+    val uiState: StateFlow<TaskUIState> = _uiState.asStateFlow()
 
     init {
-        _allTasks.value = mockTasks
-        _visibleTasks.value = mockTasks
-    }
-    fun addTask(task: Task) {
-        _allTasks.value += task
-        _visibleTasks.value = _allTasks.value
+        _uiState.value = _uiState.value.copy( tasks = mockTasks)
     }
 
-    fun removeTask(task: Task) {
-        _allTasks.value -= task
-        _visibleTasks.value = _allTasks.value
+    fun updateNewTaskTitle(text: String){
+        _uiState.value = _uiState.value.copy(newTaskTitle = text);
+    }
+    fun updateNewTaskDescription(text: String){
+        _uiState.value = _uiState.value.copy(newTaskDescription = text);
     }
 
-    fun resetFilter(){
-        _visibleTasks.value = _allTasks.value
+    fun addTask() {
+        val title = _uiState.value.newTaskTitle.trim()
+        if (title.isEmpty()) return
+
+        val newTask = Task(
+            title = title,
+            description = _uiState.value.newTaskDescription.trim(),
+            date = LocalDate.now(),
+            done = false
+        )
+
+        _uiState.value = _uiState.value.copy(
+            tasks = _uiState.value.tasks + newTask,
+            newTaskTitle = "",
+            newTaskDescription = ""
+        )
     }
 
-    fun toggleDone(id: Int) {
-        _allTasks.value = _allTasks.value.map { task ->
-            if (task.id == id)
-                task.copy(done = !task.done)
-            else
-                task
+    fun removeTask(id: String) {
+        _uiState.value = _uiState.value.copy(
+            tasks = _uiState.value.tasks.filter { it.id != id }
+        )
+    }
+
+    fun toggleDone(id: String) {
+        _uiState.value = _uiState.value.copy(
+            tasks = _uiState.value.tasks.map { task ->
+                if (task.id == id)
+                    task.copy(done = !task.done)
+                else
+                    task
+            }
+        )
+    }
+
+    fun updateTask(updatedTask: Task) {
+        _uiState.value = _uiState.value.copy(
+            tasks = _uiState.value.tasks.map { task ->
+                if (task.id == updatedTask.id)
+                    updatedTask
+                else
+                    task
+            }
+        )
+    }
+
+    fun selectTask(id: String) {
+        _uiState.value = _uiState.value.copy(
+            selectedTask = _uiState.value.tasks.find { it.id == id }
+        )
+    }
+
+    fun closeDialog(){
+        _uiState.value = _uiState.value.copy(
+            selectedTask = null
+        )
+    }
+
+    fun setFilter(filter: TaskFilter){
+        _uiState.value = _uiState.value.copy(filter = filter)
+    }
+
+    fun setSorting(sort: TaskSorting){
+        _uiState.value = _uiState.value.copy(sort = sort)
+    }
+
+    fun getFilteredTasks(): List<Task> {
+        val filtered = when (_uiState.value.filter) {
+            TaskFilter.ALL -> _uiState.value.tasks
+            TaskFilter.ACTIVE -> _uiState.value.tasks.filter { !it.done }
+            TaskFilter.COMPLETED -> _uiState.value.tasks.filter { it.done }
         }
-        _visibleTasks.value = _allTasks.value
-    }
 
-    fun filterByDone(done: Boolean) {
-        _visibleTasks.value = _allTasks.value.filter { it.done == done }
-    }
-
-    fun sortByDueDate(sort: Boolean) {
-        if(sort)
-            _visibleTasks.value = _visibleTasks.value.sortedBy { it.dueDate }
-        else
-            _visibleTasks.value = _visibleTasks.value.sortedByDescending { it.dueDate }
+        return when (_uiState.value.sort) {
+            TaskSorting.ASCENDING -> filtered.sortedBy { it.date }
+            TaskSorting.DESCENDING -> filtered.sortedByDescending { it.date }
+        }
     }
 }
