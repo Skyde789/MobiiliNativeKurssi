@@ -19,6 +19,12 @@ class TaskViewModel : ViewModel()
         _uiState.value = _uiState.value.copy( tasks = mockTasks)
     }
 
+    fun setAddTaskDialogActive(open: Boolean){
+        _uiState.value = _uiState.value.copy(
+            addNewTask = open,
+            newTaskDescription = "",
+            newTaskTitle = "")
+    }
     fun updateNewTaskTitle(text: String){
         _uiState.value = _uiState.value.copy(newTaskTitle = text);
     }
@@ -42,6 +48,8 @@ class TaskViewModel : ViewModel()
             newTaskTitle = "",
             newTaskDescription = ""
         )
+
+        setAddTaskDialogActive(false)
     }
 
     fun removeTask(id: String) {
@@ -78,7 +86,7 @@ class TaskViewModel : ViewModel()
         )
     }
 
-    fun closeDialog(){
+    fun deselectTask(){
         _uiState.value = _uiState.value.copy(
             selectedTask = null
         )

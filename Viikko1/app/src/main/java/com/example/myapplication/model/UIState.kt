@@ -4,6 +4,7 @@ import com.example.myapplication.model.Task
 data class TaskUIState(
     val tasks: List<Task> = emptyList(),
     val selectedTask: Task? = null,
+    val addNewTask: Boolean = false,
     val newTaskTitle: String = "",
     val newTaskDescription: String = "",
     val filter: TaskFilter = TaskFilter.ALL,
