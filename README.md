@@ -37,3 +37,22 @@ Compose-sovelluksissa MVVM toimii hyvin, koska UI reagoi suoraan tilan muutoksii
 StateFlow on tapa hallita ja kuunnella tilaa. Sillä on aina joku arvo, ja kun arvo muuttuu, UI päivittyy automaattisesti.
 
 ViewModelissa tilaa pidetään yleensä MutableStateFlow:ssa ja UI saa siitä vain luettavan StateFlow-version. Compose käyttää collectAsState()-funktiota, jonka avulla muutokset näkyvät heti käyttöliittymässä.
+
+# Viikko4
+Sovelluksen navigaatiorakenne on toteutettu NavigationBar komponentilla joka sijaitsee sovelluksen alapäädyssä. Käyttäjä voi sieltä lisätä uuden todo:n tai vaihdella kahden eri näkymän välillä. 
+
+MVVM ja navigointi yhdistyvät ongelmitta, kun navigoinnin yhteydessä annetaan jokaiselle ruudulle sama instanssi ViewModelista, joten kaikki ruudut saavat saman datan käyttöönsä.
+Molemmat ruudut näyttävät viewModelin sisältä saadun datan ja molemmista ruuduista voi tehdä muokkauksia samaan dataan. 
+
+Kalenteri ruutu ryhmittää todo:t niiden "dueDate" mukaan ja näyttää päivämääriä joiden alle tulee kaikki siihen kuuluvat todo:t. Todo kortteja voi painaa josta aukeaa DetailDialog missä voi muokata / poistaa todo:n. 
+Uusien lisääminen tapahtuu alanavigaatiopalkista painamalla "Add" joka aukaisee AddDialog missä voi lisätä uuden todo:n antamalla sille otsikon ja vaihtoehtoisesti kuvauksen. 
+### Mitä tarkoittaa navigointi Jetpack Composessa.
+Ruutujen välillä siirtymistä Navigation Compose kirjaston avulla. 
+
+Navigointi perustuu reitteihin (routes), joiden avulla määritellään näkymät joihin voi navigoida. 
+### Mitä ovat NavHost ja NavController.
+NavController vastaa ruutujen vaihdosta. Sen avulla siirrytään ruudusta toiseen esim. kutsumalla navigate("calendar").
+
+NavHost taas määrittelee sovelluksen navigaatiokaavion. Se sisältää kaikki reitit (composablet), joihin sovelluksessa voi navigoida.
+
+
