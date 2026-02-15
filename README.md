@@ -55,4 +55,23 @@ NavController vastaa ruutujen vaihdosta. Sen avulla siirrytään ruudusta toisee
 
 NavHost taas määrittelee sovelluksen navigaatiokaavion. Se sisältää kaikki reitit (composablet), joihin sovelluksessa voi navigoida.
 
+# Viikko5
+
+### Mitä Retrofit tekee
+Retrofit vastaa HTTP-pyyntöjen hallinnasta Android-sovelluksessa.
+Se muodostaa REST-rajapintakutsut (GET) OpenWeatherMap API:in ja palauttaa vastaukset Kotlin-olioina.
+
+### Miten JSON muutetaan dataluokiksi
+Retrofit käyttää Gson-kirjastoa, joka muuntaa JSON-vastauksen automaattisesti Kotlinin data class -olioiksi (esim. WeatherResponse).
+
+### Miten coroutines toimii tässä
+Sää datan haku tehdään coroutineissa taustasäikeessä, jotta UI ei jäädy.
+Kun API-kutsu valmistuu, tulos päivitetään ViewModeliin ja UI reagoi muutokseen automaattisesti.
+
+### Miten UI-tila toimii
+WeatherViewModel hallitsee sovelluksen tilaa Result-luokan avulla (Loading, Success, Error).
+Jetpack Compose kuuntelee tätä tilaa ja päivittää käyttöliittymän automaattisesti kun tila muuttuu.
+
+### Miten API-key on tallennettu
+API-key on tallennettu projektin local.properties tiedostoon mitä ei viedä julkiseksi GitHubiin.
 
