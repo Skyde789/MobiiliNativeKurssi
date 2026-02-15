@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(ROUTE_HOME) {
-                            TaskScreen(taskModel = viewModel )
+                            TaskScreen(taskModel = viewModel)
                         }
 
                         composable(ROUTE_CALENDAR) {
