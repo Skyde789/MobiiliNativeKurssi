@@ -15,13 +15,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.model.Task
+import com.example.myapplication.data.model.Task
 import com.example.myapplication.viewmodel.TaskViewModel
+import java.time.Instant
+import java.time.ZoneId
 
 @Composable
 fun CalendarScreen(taskModel: TaskViewModel) {
     val uiState by taskModel.uiState.collectAsState()
-    val grouped = taskModel.getFilteredTasks().groupBy { it.date }
+    val grouped = uiState.tasks.groupBy { task ->
+        val instant = Instant.ofEpochMilli(task.createdAt)
+        val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+        localDate
+    }
+    val isAddDialogOpen by taskModel.isAddDialogOpen.collectAsState()
 
     LazyColumn(modifier = Modifier.padding(16.dp)) {
         grouped.forEach { (date, tasksOfDay) ->
@@ -33,10 +40,11 @@ fun CalendarScreen(taskModel: TaskViewModel) {
                 )
             }
             items(tasksOfDay) { task ->
-                CalendarTaskCard(task = task, onTaskClick = { taskModel.selectTask(task.id) })
+                CalendarTaskCard(task = task, onTaskClick = { taskModel.selectTask(task) })
             }
         }
     }
+
 
     if(uiState.selectedTask != null)
     {
@@ -44,27 +52,29 @@ fun CalendarScreen(taskModel: TaskViewModel) {
             DetailDialog(
                 task = task,
                 onClose = { taskModel.deselectTask() },
-                onUpdate = { updatedTask -> taskModel.updateTask(updatedTask) },
-                onDelete = { id -> taskModel.removeTask(id) }
+                onUpdate = { updatedTask -> taskModel.updateTask(
+                    title = updatedTask.title,
+                    description = updatedTask.description
+                ) },
+                onDelete = { taskModel.deleteTask(task) }
             )
         }
     }
-    else if(uiState.addNewTask)
+    else if(isAddDialogOpen)
     {
         AddDialog(
-            title = uiState.newTaskTitle,
-            description = uiState.newTaskDescription,
-            onTitleChange = { taskModel.updateNewTaskTitle(it) },
-            onDescriptionChange = { taskModel.updateNewTaskDescription(it) },
-            onConfirm = { taskModel.addTask() },
-            onClose = { taskModel.setAddTaskDialogActive(false) }
+            onConfirm = { title, description ->
+                taskModel.addTask(title, description)
+                taskModel.closeAddDialog()
+            },
+            onClose = { taskModel.closeAddDialog() }
         )
     }
 }
 @Composable
 fun CalendarTaskCard(
     task: Task,
-    onTaskClick: (String) -> Unit
+    onTaskClick: (Int) -> Unit
 ) {
     Card(
         modifier = Modifier

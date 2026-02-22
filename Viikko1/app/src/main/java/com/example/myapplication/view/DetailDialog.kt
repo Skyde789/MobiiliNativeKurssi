@@ -15,15 +15,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.model.Task
-
+import com.example.myapplication.data.model.Task
 
 @Composable
 fun DetailDialog(
     task: Task,
     onClose: () -> Unit,
     onUpdate: (Task) -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (Int) -> Unit
 ) {
     var title by remember { mutableStateOf(task.title) }
     var description by remember { mutableStateOf(task.description) }
@@ -43,6 +42,7 @@ fun DetailDialog(
                 TextField(
                     value = description,
                     onValueChange = { description = it },
+                    maxLines = 3,
                     label = { Text(text = "Description") }
                 )
             }
@@ -51,7 +51,12 @@ fun DetailDialog(
             Row {
                 Button(onClick = { onDelete(task.id); onClose() }) { Text("Delete") }
                 Spacer(modifier = Modifier.width(6.dp))
-                Button(onClick = { onUpdate(task.copy(title = title, description = description)); onClose() }) { Text("Save") }
+                Button(onClick = {
+                    onUpdate(task.copy(title = title, description = description))
+                    onClose()
+                }) {
+                    Text("Save")
+                }
             }
         },
 

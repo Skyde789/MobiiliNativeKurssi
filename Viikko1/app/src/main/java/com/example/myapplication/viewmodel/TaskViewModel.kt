@@ -3,113 +3,119 @@ import TaskFilter
 import TaskSorting
 import TaskUIState
 import androidx.lifecycle.ViewModel
-import com.example.myapplication.model.Task
-import com.example.myapplication.model.mockTasks
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.model.Task
+import com.example.myapplication.data.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import java.time.LocalDate
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class TaskViewModel : ViewModel()
+class TaskViewModel(private val repository: TaskRepository) : ViewModel()
 {
-    private val _uiState = MutableStateFlow(TaskUIState())
-    val uiState: StateFlow<TaskUIState> = _uiState.asStateFlow()
+    private val filter = MutableStateFlow(TaskFilter.ALL)
+    private val sort = MutableStateFlow(TaskSorting.DESCENDING)
+    private val selectedTaskId = MutableStateFlow<Int?>(null)
+    private val _isAddDialogOpen = MutableStateFlow(false)
+    val isAddDialogOpen: StateFlow<Boolean> = _isAddDialogOpen
 
-    init {
-        _uiState.value = _uiState.value.copy( tasks = mockTasks)
-    }
+    val uiState: StateFlow<TaskUIState> =
+        combine(
+            repository.allTasks,
+            filter,
+            sort,
+            selectedTaskId,
+            repository.pendingTaskCount
+        ) { tasks, filter, sort, selectedTask, pendingTaskCount ->
 
-    fun setAddTaskDialogActive(open: Boolean){
-        _uiState.value = _uiState.value.copy(
-            addNewTask = open,
-            newTaskDescription = "",
-            newTaskTitle = "")
-    }
-    fun updateNewTaskTitle(text: String){
-        _uiState.value = _uiState.value.copy(newTaskTitle = text);
-    }
-    fun updateNewTaskDescription(text: String){
-        _uiState.value = _uiState.value.copy(newTaskDescription = text);
-    }
-
-    fun addTask() {
-        val title = _uiState.value.newTaskTitle.trim()
-        if (title.isEmpty()) return
-
-        val newTask = Task(
-            title = title,
-            description = _uiState.value.newTaskDescription.trim(),
-            date = LocalDate.now(),
-            done = false
-        )
-
-        _uiState.value = _uiState.value.copy(
-            tasks = _uiState.value.tasks + newTask,
-            newTaskTitle = "",
-            newTaskDescription = ""
-        )
-
-        setAddTaskDialogActive(false)
-    }
-
-    fun removeTask(id: String) {
-        _uiState.value = _uiState.value.copy(
-            tasks = _uiState.value.tasks.filter { it.id != id }
-        )
-    }
-
-    fun toggleDone(id: String) {
-        _uiState.value = _uiState.value.copy(
-            tasks = _uiState.value.tasks.map { task ->
-                if (task.id == id)
-                    task.copy(done = !task.done)
-                else
-                    task
+            val filtered = when (filter) {
+                TaskFilter.ALL -> tasks
+                TaskFilter.ACTIVE -> tasks.filter { !it.isCompleted }
+                TaskFilter.COMPLETED -> tasks.filter { it.isCompleted }
             }
-        )
-    }
 
-    fun updateTask(updatedTask: Task) {
-        _uiState.value = _uiState.value.copy(
-            tasks = _uiState.value.tasks.map { task ->
-                if (task.id == updatedTask.id)
-                    updatedTask
-                else
-                    task
+            val sorted = when (sort) {
+                TaskSorting.ASCENDING -> filtered.sortedBy { it.createdAt }
+                TaskSorting.DESCENDING -> filtered.sortedByDescending { it.createdAt }
             }
+
+            val selected = sorted.find { it.id == selectedTask }
+
+            TaskUIState(
+                tasks = sorted,
+                selectedTask = selected,
+                filter = filter,
+                sort = sort,
+                pendingCount = pendingTaskCount
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            TaskUIState()
         )
+
+    fun selectTask(task: Task) {
+        selectedTaskId.value = task.id
     }
 
-    fun selectTask(id: String) {
-        _uiState.value = _uiState.value.copy(
-            selectedTask = _uiState.value.tasks.find { it.id == id }
-        )
+    fun deselectTask() {
+        selectedTaskId.value = null
     }
 
-    fun deselectTask(){
-        _uiState.value = _uiState.value.copy(
-            selectedTask = null
-        )
+    fun setFilter(value: TaskFilter) {
+        filter.value = value
     }
 
-    fun setFilter(filter: TaskFilter){
-        _uiState.value = _uiState.value.copy(filter = filter)
+    fun setSorting(value: TaskSorting) {
+        sort.value = value
     }
 
-    fun setSorting(sort: TaskSorting){
-        _uiState.value = _uiState.value.copy(sort = sort)
-    }
-
-    fun getFilteredTasks(): List<Task> {
-        val filtered = when (_uiState.value.filter) {
-            TaskFilter.ALL -> _uiState.value.tasks
-            TaskFilter.ACTIVE -> _uiState.value.tasks.filter { !it.done }
-            TaskFilter.COMPLETED -> _uiState.value.tasks.filter { it.done }
+    fun toggleDone(task: Task) {
+        viewModelScope.launch {
+            repository.update(task.copy(isCompleted = !task.isCompleted))
         }
+    }
 
-        return when (_uiState.value.sort) {
-            TaskSorting.ASCENDING -> filtered.sortedBy { it.date }
-            TaskSorting.DESCENDING -> filtered.sortedByDescending { it.date }
+    fun addTask(title: String, description: String) {
+        viewModelScope.launch {
+            val task = Task(
+                title = title,
+                description = description
+            )
+            repository.insert(task)
         }
+    }
+
+    fun updateTask(title: String, description: String) {
+        val current = uiState.value.selectedTask ?: return
+
+        viewModelScope.launch {
+            repository.update(current.copy(
+                title = title,
+                description = description
+            ))
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch {
+            repository.delete(task)
+        }
+    }
+
+    fun deleteCompletedTasks() {
+        viewModelScope.launch {
+            repository.deleteCompletedTasks()
+        }
+    }
+
+    fun openAddDialog() {
+        _isAddDialogOpen.value = true
+    }
+
+    fun closeAddDialog() {
+        _isAddDialogOpen.value = false
     }
 }

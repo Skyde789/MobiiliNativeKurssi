@@ -6,16 +6,19 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun AddDialog(
-    title: String,
-    description: String,
-    onTitleChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (String, String) -> Unit,
     onClose: () -> Unit
 ) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+
     AlertDialog(
         onDismissRequest = onClose,
         title = {
@@ -25,23 +28,31 @@ fun AddDialog(
             Column {
                 TextField(
                     value = title,
-                    onValueChange = onTitleChange,
+                    onValueChange = { title = it },
                     label = { Text(text = "Title") }
                 )
                 TextField(
                     value = description,
-                    onValueChange = onDescriptionChange,
+                    onValueChange = { description = it },
                     label = { Text(text = "Description") }
                 )
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm) {
+            Button(onClick = {
+                onConfirm(title, description)
+                title = ""
+                description = ""
+            }) {
                 Text("Add")
             }
         },
         dismissButton = {
-            Button(onClick = onClose) {
+            Button(onClick = {
+                onClose()
+                title = ""
+                description = ""
+            }) {
                 Text("Cancel")
             }
         }
