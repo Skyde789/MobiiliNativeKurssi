@@ -75,3 +75,72 @@ Jetpack Compose kuuntelee tätä tilaa ja päivittää käyttöliittymän automa
 ### Miten API-key on tallennettu
 API-key on tallennettu projektin local.properties tiedostoon mitä ei viedä julkiseksi GitHubiin.
 
+# Viikko6
+
+### Mitä Room tekee tässä projektissa
+Room on Androidin tietokantakirjasto, joka tarjoaa turvallisen ja rakenteellisen tavan käyttää SQLite-tietokantaa.
+
+- Entity
+Määrittelee tietokannan taulun rakenteen. Yksi Entity vastaa yhtä Todo-tehtävää.
+
+- DAO
+Sisältää CRUD-operaatiot (insert, update, delete, query). DAO määrittelee miten dataa käsitellään.
+
+- Database
+Room-tietokannan pääluokka, joka yhdistää Entityt ja DAO:t.
+
+- Repository 
+Välikappale ViewModelin ja tietokannan välillä. ViewModel kutsuu tietokannasta tiedot tämän avulla. 
+
+- ViewModel
+Sisältää UI-logiikan ja antaa datan näkymille.
+
+- UI
+Näyttää datan käyttäjälle ja välittää käyttäjän toiminnot ViewModelille.
+
+### Projektin Rakenne
+```
+com.example.myapplication
+│
+├── data
+│   ├── local
+│   │   ├── AppDatabase.kt
+│   │   └── TaskDao.kt
+│   ├── model
+│   │   ├── TaskEntity.kt
+│   │   └── TaskUIState.kt
+│   └── repository
+│       └── TaskRepository.kt
+│
+├── navigation
+│   ├── BottomNavigationBar.kt
+│   └── Routes.kt
+│
+├── view
+│   ├── TaskScreen.kt
+│   ├── AddDialog.kt
+│   ├── DetailDialog.kt
+│   └── CalendarScreen.kt
+│
+├── viewmodel
+│   └── TaskViewModel.kt
+│
+└── MainActivity.kt
+```
+### Datan kulku (Data Flow)
+
+- Käyttäjä tekee toiminnon UI:ssa (esim. lisää tehtävän)
+
+- UI kutsuu TaskViewModelia
+
+- ViewModel kutsuu TaskRepositorya
+
+- Repository käyttää TaskDaoa
+
+- DAO lukee/kirjoittaa dataa Room-tietokantaan
+
+- Muuttunut data palautuu Flow/State-muodossa takaisin:
+
+- DAO → Repository → ViewModel → UI
+
+- UI päivittyy automaattisesti (Jetpack Compose)
